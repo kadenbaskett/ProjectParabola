@@ -21,6 +21,9 @@ const colors = {
   areaBottomColor: "rgba(41, 98, 255, 0.28)",
 };
 
+let lastProcessedDay = -1; // Initialize the last processed day with an invalid value
+let lastProcessedMonth = -1;
+
 export const Chart: React.FC<ChartProps> = ({ priceData: priceData }) => {
   const chartContainerRef = useRef<HTMLDivElement>(null);
 
@@ -45,18 +48,26 @@ export const Chart: React.FC<ChartProps> = ({ priceData: priceData }) => {
         rightOffset: 20,
         // timeVisible: true,
         borderVisible: false,
-        // tickMarkFormatter: (time, tickMarkType, locale) => {
-        //   const date = new Date(time * 1000);
-        //   const dayOfMonth = date.getDate();
-        //   const month = date.toLocaleString(locale, { month: 'short' });
+        tickMarkFormatter: (
+          time: number,
+          tickMarkType: any,
+          locale: Intl.LocalesArgument
+        ) => {
+          const date = new Date(time * 1000);
+          const dayOfMonth = date.getDate();
+          const month = date.toLocaleString(locale, { month: "short" });
 
-        //   if (chart. !== dayOfMonth) {
-        //     chart.lastPrintedDay = dayOfMonth;
-        //     return `${dayOfMonth} ${month}`;
-        //   }
+          if (
+            dayOfMonth !== lastProcessedDay ||
+            date.getMonth() !== lastProcessedMonth
+          ) {
+            lastProcessedDay = dayOfMonth;
+            lastProcessedMonth = date.getMonth();
+            return `${dayOfMonth}`;
+          }
 
-        //   return '';
-        // },
+          return ``;
+        },
       },
     });
 
@@ -68,7 +79,10 @@ export const Chart: React.FC<ChartProps> = ({ priceData: priceData }) => {
     });
     barSeries.setData(priceData);
     // newSeries.setData(priceData);
-    chart.timeScale().fitContent();
+    chart.timeScale().setVisibleLogicalRange({
+      from: Math.floor(priceData.length / 2),
+      to: priceData.length,
+    });
 
     window.addEventListener("resize", handleResize);
 

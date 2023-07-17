@@ -17,7 +17,7 @@ const getDaysAgo = (daysBack: number) => {
 export default function ChartPage() {
   const [ticker, setTicker] = useState<string>("SPY");
   const [interval, setInterval] = useState<number>(10);
-  const [startPriceData, setStartPriceDate] = useState<number>(getDaysAgo(8));
+  const [startPriceData, setStartPriceDate] = useState<number>(getDaysAgo(14));
   const [endPriceData, setEndPriceData] = useState<number>(getDaysAgo(0));
   const [priceData, setPriceData] = useState<BarData[]>([]);
   const [loadingPriceData, setLoadingPriceData] = useState<boolean>(true);
@@ -25,12 +25,12 @@ export default function ChartPage() {
 
   useEffect(() => {
     loadPricing();
-    loadBackupPricing();
+    // loadBackupPricing();
   }, []);
 
   useEffect(() => {
     loadPricing();
-    loadBackupPricing();
+    // loadBackupPricing();
   }, [ticker, interval]);
 
   useEffect(() => {
@@ -52,19 +52,27 @@ export default function ChartPage() {
       });
   };
 
-  const loadBackupPricing = async () => {
-    // await getIntradayCandles(ticker, interval, startPriceData, endPriceData)
-    //   .then((data) => {
-    //     setPriceData(data);
-    //     if (chartErrored) {
-    //       setChartErrored(false);
-    //     }
-    //   })
-    //   .catch((error) => {
-    //     console.error("Error:", error);
-    //     setChartErrored(true);
-    //   });
-  };
+  // const loadBackupPricing = async () => {
+  //   await getIntradayCandles(
+  //     ticker,
+  //     interval,
+  //     getDateTwiceAsFar(startPriceData, endPriceData),
+  //     startPriceData
+  //   )
+  //     .then((data) => {
+  //       const newPriceData = [...data, ...priceData];
+  //       console.log("Old data: ", priceData);
+  //       setPriceData(newPriceData);
+  //       console.log("New data: ", newPriceData);
+  //       if (chartErrored) {
+  //         setChartErrored(false);
+  //       }
+  //     })
+  //     .catch((error) => {
+  //       console.error("Error:", error);
+  //       setChartErrored(true);
+  //     });
+  // };
 
   return (
     <>
