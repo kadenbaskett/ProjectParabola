@@ -1,14 +1,20 @@
 "use client";
 
-import { createChart, ColorType, LineData } from "lightweight-charts";
+import {
+  createChart,
+  ColorType,
+  LineData,
+  BarData,
+  CandlestickData,
+} from "lightweight-charts";
 import React, { useEffect, useRef } from "react";
 
 interface ChartProps {
-  priceData: LineData[];
+  priceData: CandlestickData[];
 }
 
 const colors = {
-  backgroundColor: "white",
+  backgroundColor: "black",
   lineColor: "#2962FF",
   textColor: "black",
   areaTopColor: "#2962FF",
@@ -26,14 +32,43 @@ export const Chart: React.FC<ChartProps> = ({ priceData: priceData }) => {
     const chart = createChart(chartContainerRef?.current as HTMLDivElement, {
       layout: {
         background: { type: ColorType.Solid, color: colors.backgroundColor },
+        textColor: "#ffffff",
+      },
+      grid: {
+        vertLines: { visible: false },
+        horzLines: { visible: false },
       },
       width: chartContainerRef?.current?.clientWidth,
-      height: 300,
-    });
-    chart.timeScale().fitContent();
+      height: chartContainerRef?.current?.clientHeight,
+      timeScale: {
+        barSpacing: 6,
+        rightOffset: 20,
+        // timeVisible: true,
+        borderVisible: false,
+        // tickMarkFormatter: (time, tickMarkType, locale) => {
+        //   const date = new Date(time * 1000);
+        //   const dayOfMonth = date.getDate();
+        //   const month = date.toLocaleString(locale, { month: 'short' });
 
-    const newSeries = chart.addLineSeries();
-    newSeries.setData(priceData);
+        //   if (chart. !== dayOfMonth) {
+        //     chart.lastPrintedDay = dayOfMonth;
+        //     return `${dayOfMonth} ${month}`;
+        //   }
+
+        //   return '';
+        // },
+      },
+    });
+
+    // const newSeries = chart.addLineSeries();
+    const barSeries = chart.addCandlestickSeries();
+    barSeries.applyOptions({
+      lastValueVisible: false,
+      priceLineVisible: false,
+    });
+    barSeries.setData(priceData);
+    // newSeries.setData(priceData);
+    chart.timeScale().fitContent();
 
     window.addEventListener("resize", handleResize);
 
@@ -44,7 +79,7 @@ export const Chart: React.FC<ChartProps> = ({ priceData: priceData }) => {
     };
   }, [priceData]);
 
-  return <div ref={chartContainerRef} />;
+  return <div ref={chartContainerRef} className="h-full w-full" />;
 };
 
 export default Chart;
