@@ -6,25 +6,26 @@ import {
   LineData,
   BarData,
   CandlestickData,
+  HistogramData,
 } from "lightweight-charts";
 import React, { useEffect, useRef } from "react";
 
 interface ChartProps {
   priceData: CandlestickData[];
+  volumeData: HistogramData[];
+  indicatorData: LineData[][];
+  backgroundColor: string;
 }
-
-const colors = {
-  backgroundColor: "black",
-  lineColor: "#2962FF",
-  textColor: "black",
-  areaTopColor: "#2962FF",
-  areaBottomColor: "rgba(41, 98, 255, 0.28)",
-};
 
 let lastProcessedDay = -1; // Initialize the last processed day with an invalid value
 let lastProcessedMonth = -1;
 
-export const Chart: React.FC<ChartProps> = ({ priceData: priceData }) => {
+export const Chart: React.FC<ChartProps> = ({
+  priceData,
+  volumeData,
+  indicatorData,
+  backgroundColor,
+}) => {
   const chartContainerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -34,7 +35,7 @@ export const Chart: React.FC<ChartProps> = ({ priceData: priceData }) => {
 
     const chart = createChart(chartContainerRef?.current as HTMLDivElement, {
       layout: {
-        background: { type: ColorType.Solid, color: colors.backgroundColor },
+        background: { type: ColorType.Solid, color: backgroundColor },
         textColor: "#ffffff",
       },
       grid: {
@@ -56,7 +57,7 @@ export const Chart: React.FC<ChartProps> = ({ priceData: priceData }) => {
           const date = new Date(time * 1000);
           const dayOfMonth = date.getDate();
           const month = date.toLocaleString(locale, { month: "short" });
-
+          //TODO fix this to only show beginning of days and months labeled
           if (
             dayOfMonth !== lastProcessedDay ||
             date.getMonth() !== lastProcessedMonth
@@ -71,14 +72,47 @@ export const Chart: React.FC<ChartProps> = ({ priceData: priceData }) => {
       },
     });
 
-    // const newSeries = chart.addLineSeries();
+    // add candlesticks
     const barSeries = chart.addCandlestickSeries();
     barSeries.applyOptions({
-      lastValueVisible: false,
+      lastValueVisible: true,
       priceLineVisible: false,
+      wickUpColor: "rgb(82, 237, 58)",
+      upColor: "rgb(82, 237, 58)",
+      wickDownColor: "rgb(237, 58, 82)",
+      downColor: "rgb(237, 58, 82)",
+      borderVisible: false,
     });
     barSeries.setData(priceData);
-    // newSeries.setData(priceData);
+    const volumeSeries = chart.addHistogramSeries({
+      priceFormat: {
+        type: "volume",
+      },
+      priceScaleId: "", // set as an overlay by setting a blank priceScaleId
+    });
+
+    // add volume bars
+    volumeSeries.applyOptions({
+      lastValueVisible: true,
+      priceLineVisible: false,
+    });
+    volumeSeries.priceScale().applyOptions({
+      scaleMargins: {
+        top: 0.7, // highest point of the series will be 70% away from the top
+        bottom: 0, // lowest point will be at the very bottom.
+      },
+    });
+    volumeSeries.setData(volumeData);
+
+    // add indicator curvers
+    const lineSeries = chart.addLineSeries();
+    lineSeries.applyOptions({
+      lastValueVisible: true,
+      priceLineVisible: false,
+      lineWidth: 1,
+    });
+    lineSeries.setData(indicatorData[0]);
+
     chart.timeScale().setVisibleLogicalRange({
       from: Math.floor(priceData.length / 2),
       to: priceData.length,

@@ -1,7 +1,12 @@
 import axios, { AxiosResponse } from "axios";
-import { CandlestickData, Time } from "lightweight-charts";
+import {
+  CandlestickData,
+  HistogramData,
+  LineData,
+  Time,
+} from "lightweight-charts";
 
-interface CandleResponse {
+interface ServerCandleResponse {
   c: number;
   h: number;
   l: number;
@@ -12,18 +17,42 @@ interface CandleResponse {
   vw: number;
 }
 
-const convertToBarSeries = (
-  candleData: CandleResponse[]
-): CandlestickData[] => {
-  const barData: CandlestickData[] = candleData.map((candle) => ({
-    time: (candle.t / 1000) as Time, // Unix timestamp for time
-    open: candle.o, // Open price
-    high: candle.h, // High price
-    low: candle.l, // Low price
-    close: candle.c, // Close price
+export interface GetPriceReponse {
+  candleData: CandlestickData[];
+  volumeData: HistogramData[];
+  indicators: LineData[][];
+}
+
+const convertToPriceResponse = (
+  priceData: ServerCandleResponse[]
+): GetPriceReponse => {
+  const candleData: CandlestickData[] = priceData.map((candle) => ({
+    time: (candle.t / 1000) as Time,
+    open: candle.o,
+    high: candle.h,
+    low: candle.l,
+    close: candle.c,
   }));
 
-  return barData;
+  const volumeData: HistogramData[] = priceData.map((candle) => ({
+    time: (candle.t / 1000) as Time,
+    value: candle.v,
+    color: candle.o > candle.c ? "rgb(237, 58, 82)" : "rgb(82, 237, 58)",
+  }));
+
+  const indicator: LineData[] = priceData.map((candle) => ({
+    time: (candle.t / 1000) as Time,
+    value: candle.vw + candle.vw * 0.02,
+    color: "rgb(58, 82, 237)",
+  }));
+
+  const response: GetPriceReponse = {
+    candleData: candleData,
+    volumeData: volumeData,
+    indicators: [indicator],
+  };
+
+  return response;
 };
 
 export const getIntradayCandles = async (
@@ -38,8 +67,8 @@ export const getIntradayCandles = async (
     return await axios
       .get(url)
       .then((response: AxiosResponse) => {
-        const responseData: CandleResponse[] = response.data;
-        const barData = convertToBarSeries(responseData);
+        const responseData: ServerCandleResponse[] = response.data;
+        const barData = convertToPriceResponse(responseData);
         return barData;
       })
       .catch((error: any) => {

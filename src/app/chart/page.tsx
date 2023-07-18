@@ -1,9 +1,12 @@
 "use client";
 
 import Chart from "@/components/Chart";
-import { BarData, LineData } from "lightweight-charts";
+import { BarData, HistogramData, LineData } from "lightweight-charts";
 import { SetStateAction, useEffect, useState } from "react";
-import { getIntradayCandles } from "../api/simmispotter-api/GetIntradayCandles";
+import {
+  GetPriceReponse,
+  getIntradayCandles,
+} from "../api/simmispotter-api/GetIntradayCandles";
 import { InfinitySpin } from "react-loader-spinner";
 import TickerSearch from "@/components/SearchBars/TickerSearch";
 import IntervalDropdown from "@/components/Dropdowns/IntervalDropdown";
@@ -20,7 +23,9 @@ export default function ChartPage() {
   const [startPriceData, setStartPriceDate] = useState<number>(getDaysAgo(14));
   const [endPriceData, setEndPriceData] = useState<number>(getDaysAgo(0));
   const [priceData, setPriceData] = useState<BarData[]>([]);
-  const [loadingPriceData, setLoadingPriceData] = useState<boolean>(true);
+  const [volumeData, setVolumeData] = useState<HistogramData[]>([]);
+  const [indicatorData, setIndicatorData] = useState<LineData[][]>([]);
+  const [loadingChartData, setLoadingChartData] = useState<boolean>(true);
   const [chartErrored, setChartErrored] = useState<boolean>(false);
 
   useEffect(() => {
@@ -34,17 +39,19 @@ export default function ChartPage() {
   }, [ticker, interval]);
 
   useEffect(() => {
-    if (priceData.length != 0) {
-      setLoadingPriceData(false);
+    if (priceData.length != 0 && volumeData.length != 0) {
+      setLoadingChartData(false);
     }
-  }, [priceData]);
+  }, [priceData, volumeData]);
 
   const loadPricing = async () => {
+    setLoadingChartData(true);
+
     await getIntradayCandles(ticker, interval, startPriceData, endPriceData)
-      .then((data) => {
-        if (data.length == 0) {
-        }
-        setPriceData(data);
+      .then((data: GetPriceReponse) => {
+        setIndicatorData(data.indicators);
+        setPriceData(data.candleData);
+        setVolumeData(data.volumeData);
       })
       .catch((error) => {
         console.error("Error:", error);
@@ -77,7 +84,7 @@ export default function ChartPage() {
   return (
     <>
       <div className="w-full h-full flex justify-center items-center py-6 px-32">
-        {loadingPriceData ? (
+        {loadingChartData ? (
           <>
             <InfinitySpin width="200" color="#7c3aed" />
           </>
@@ -101,7 +108,12 @@ export default function ChartPage() {
                   <p className="text-white">Error loading chart </p>
                 </div>
               ) : (
-                <Chart priceData={priceData} />
+                <Chart
+                  priceData={priceData}
+                  volumeData={volumeData}
+                  backgroundColor={"black"}
+                  indicatorData={indicatorData}
+                />
               )}
             </div>
           </div>
