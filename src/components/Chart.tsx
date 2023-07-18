@@ -38,6 +38,14 @@ export const Chart: React.FC<ChartProps> = ({
         background: { type: ColorType.Solid, color: backgroundColor },
         textColor: "#ffffff",
       },
+      watermark: {
+        visible: true,
+        fontSize: 24,
+        horzAlign: "center",
+        vertAlign: "center",
+        color: "#88849765",
+        text: "ProjectParabola",
+      },
       grid: {
         vertLines: { visible: false },
         horzLines: { visible: false },
